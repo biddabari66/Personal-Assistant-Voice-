@@ -56,7 +56,7 @@ export default function Memory({ knowledge, profile }: { knowledge: any[], profi
       )}
 
       {insights && (
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-slate-100 p-6 rounded-3xl shadow-lg border border-slate-700">
+        <div className="bg-gradient-to-br from-white to-slate-800 text-slate-800 p-6 rounded-3xl shadow-lg border border-slate-700">
           <h3 className="text-lg font-semibold text-executive-gold flex items-center mb-4">
             <Sparkles className="mr-2" size={20} /> Business Insights Dashboard
           </h3>
@@ -70,19 +70,19 @@ export default function Memory({ knowledge, profile }: { knowledge: any[], profi
         {sortedKnowledge.length === 0 ? (
           <div className="text-center py-12 bg-slate-50 border border-slate-200 border-dashed rounded-2xl">
             <p className="text-slate-500 text-sm">My knowledge base is empty.</p>
-            <p className="text-slate-400 text-xs mt-2 max-w-sm mx-auto">
+            <p className="text-slate-500 text-xs mt-2 max-w-sm mx-auto">
               Tell me about your business models, strategies, or personal preferences, and say "remember that" so I can store it permanently.
             </p>
           </div>
         ) : (
           sortedKnowledge.map(fact => (
             <div key={fact.id} className="bg-white shadow-sm border border-slate-200 p-5 rounded-2xl flex items-start gap-4">
-              <div className="bg-slate-50 p-2 rounded-xl text-slate-400 shrink-0 mt-1">
+              <div className="bg-slate-50 p-2 rounded-xl text-slate-500 shrink-0 mt-1">
                 <Brain size={20} />
               </div>
               <div>
                 <p className="text-slate-800 font-medium leading-relaxed">{fact.fact}</p>
-                <div className="flex items-center text-xs text-slate-400 mt-3">
+                <div className="flex items-center text-xs text-slate-500 mt-3">
                   <Clock size={12} className="mr-1" />
                   {new Date(fact.timestamp).toLocaleString()}
                 </div>

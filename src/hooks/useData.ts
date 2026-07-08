@@ -39,28 +39,28 @@ export function useData(userId: string | null) {
       })
       .catch(() => {
         // Fallback to local storage
-        const loadedTasks = localStorage.getItem(`aria_tasks_${userId}`);
+        const loadedTasks = localStorage.getItem(`nia_tasks_${userId}`);
         if (loadedTasks) setTasks(JSON.parse(loadedTasks));
 
-        const loadedEvents = localStorage.getItem(`aria_events_${userId}`);
+        const loadedEvents = localStorage.getItem(`nia_events_${userId}`);
         if (loadedEvents) setEvents(JSON.parse(loadedEvents));
 
-        const loadedNotes = localStorage.getItem(`aria_notes_${userId}`);
+        const loadedNotes = localStorage.getItem(`nia_notes_${userId}`);
         if (loadedNotes) setNotes(JSON.parse(loadedNotes));
 
-        const loadedReminders = localStorage.getItem(`aria_reminders_${userId}`);
+        const loadedReminders = localStorage.getItem(`nia_reminders_${userId}`);
         if (loadedReminders) setReminders(JSON.parse(loadedReminders));
 
-        const loadedDocs = localStorage.getItem(`aria_documents_${userId}`);
+        const loadedDocs = localStorage.getItem(`nia_documents_${userId}`);
         if (loadedDocs) setDocuments(JSON.parse(loadedDocs));
 
-        const loadedKnowledge = localStorage.getItem(`aria_knowledge_${userId}`);
+        const loadedKnowledge = localStorage.getItem(`nia_knowledge_${userId}`);
         if (loadedKnowledge) setKnowledge(JSON.parse(loadedKnowledge));
 
-        const loadedCommandLog = localStorage.getItem(`aria_command_log_${userId}`);
+        const loadedCommandLog = localStorage.getItem(`nia_command_log_${userId}`);
         if (loadedCommandLog) setCommandLog(JSON.parse(loadedCommandLog));
 
-        const loadedProfile = localStorage.getItem(`aria_profile_${userId}`);
+        const loadedProfile = localStorage.getItem(`nia_profile_${userId}`);
         if (loadedProfile) setProfile(JSON.parse(loadedProfile));
       });
   }, [userId]);
@@ -76,48 +76,48 @@ export function useData(userId: string | null) {
 
   const saveTasks = (newTasks: Task[]) => {
     setTasks(newTasks);
-    if(userId) localStorage.setItem(`aria_tasks_${userId}`, JSON.stringify(newTasks));
+    if(userId) localStorage.setItem(`nia_tasks_${userId}`, JSON.stringify(newTasks));
     syncToDb('tasks', newTasks);
   };
 
   const saveEvents = (newEvents: Event[]) => {
     setEvents(newEvents);
-    if(userId) localStorage.setItem(`aria_events_${userId}`, JSON.stringify(newEvents));
+    if(userId) localStorage.setItem(`nia_events_${userId}`, JSON.stringify(newEvents));
     syncToDb('events', newEvents);
   };
 
   const saveNotes = (newNotes: Note[]) => {
     setNotes(newNotes);
-    if(userId) localStorage.setItem(`aria_notes_${userId}`, JSON.stringify(newNotes));
+    if(userId) localStorage.setItem(`nia_notes_${userId}`, JSON.stringify(newNotes));
     syncToDb('notes', newNotes);
   };
 
   const saveReminders = (newReminders: Reminder[]) => {
     setReminders(newReminders);
-    if(userId) localStorage.setItem(`aria_reminders_${userId}`, JSON.stringify(newReminders));
+    if(userId) localStorage.setItem(`nia_reminders_${userId}`, JSON.stringify(newReminders));
   };
 
   const saveDocuments = (newDocs: Document[]) => {
     setDocuments(newDocs);
-    if(userId) localStorage.setItem(`aria_documents_${userId}`, JSON.stringify(newDocs));
+    if(userId) localStorage.setItem(`nia_documents_${userId}`, JSON.stringify(newDocs));
     syncToDb('documents', newDocs);
   };
 
   const saveKnowledge = (newKnowledge: any[]) => {
     setKnowledge(newKnowledge);
-    if(userId) localStorage.setItem(`aria_knowledge_${userId}`, JSON.stringify(newKnowledge));
+    if(userId) localStorage.setItem(`nia_knowledge_${userId}`, JSON.stringify(newKnowledge));
     syncToDb('knowledge', newKnowledge);
   };
 
   const saveCommandLog = (newLog: CommandLogEntry[]) => {
     setCommandLog(newLog);
-    if(userId) localStorage.setItem(`aria_command_log_${userId}`, JSON.stringify(newLog));
+    if(userId) localStorage.setItem(`nia_command_log_${userId}`, JSON.stringify(newLog));
     syncToDb('commandLog', newLog);
   };
 
   const saveProfile = (newProfile: MDProfile) => {
     setProfile(newProfile);
-    if(userId) localStorage.setItem(`aria_profile_${userId}`, JSON.stringify(newProfile));
+    if(userId) localStorage.setItem(`nia_profile_${userId}`, JSON.stringify(newProfile));
     syncToDb('profile', newProfile);
   };
 

@@ -84,27 +84,6 @@ export default function Typist({ documents, saveDocuments, notes = [], saveNotes
     return () => unsubscribe();
   }, []);
 
-  // Create a new document
-  const createNewDoc = () => {
-    const newDoc: Document = {
-      id: crypto.randomUUID(),
-      title: `Draft - ${new Date().toLocaleDateString()}`,
-      content: '',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    setActiveDoc(newDoc);
-    setIsTypingMode(true);
-    setViewMode('EDIT');
-  };
-
-  // Open existing
-  const openDoc = (doc: Document) => {
-    setActiveDoc(doc);
-    setIsTypingMode(true);
-    setViewMode('VIEW');
-  };
-
   const activeDocRef = useRef(activeDoc);
   const docsRef = useRef(documents);
   const saveDocsRef = useRef(saveDocuments);
@@ -127,7 +106,30 @@ export default function Typist({ documents, saveDocuments, notes = [], saveNotes
       updatedDocs = [docToSave, ...currentDocs];
     }
     
+    docsRef.current = updatedDocs;
     saveDocsRef.current(updatedDocs);
+  };
+
+  // Create a new document
+  const createNewDoc = () => {
+    const newDoc: Document = {
+      id: crypto.randomUUID(),
+      title: `Draft - ${new Date().toLocaleDateString()}`,
+      content: '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    setActiveDoc(newDoc);
+    setIsTypingMode(true);
+    setViewMode('EDIT');
+    handleSave(newDoc);
+  };
+
+  // Open existing
+  const openDoc = (doc: Document) => {
+    setActiveDoc(doc);
+    setIsTypingMode(true);
+    setViewMode('VIEW');
   };
 
   const handleClose = () => {
@@ -206,12 +208,12 @@ export default function Typist({ documents, saveDocuments, notes = [], saveNotes
     }
   }, [isListening, transcript]);
 
-  // Save changes automatically after 30 seconds of inactivity
+  // Save changes automatically after 3 seconds of inactivity
   useEffect(() => {
     if (activeDoc) {
       const timer = setTimeout(() => {
         handleSave(activeDoc);
-      }, 30000);
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [activeDoc?.content, activeDoc?.title]);
@@ -279,7 +281,7 @@ export default function Typist({ documents, saveDocuments, notes = [], saveNotes
             <button 
               onClick={isListening ? stopListening : startListening}
               className={`flex items-center px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                isListening ? 'bg-red-500 text-white' : 'bg-white text-executive-gold hover:bg-slate-100 border border-slate-200'
+                isListening ? 'bg-red-500 text-slate-900' : 'bg-white text-executive-gold hover:bg-slate-100 border border-slate-200'
               }`}
             >
               <Mic size={16} className="mr-2" />
@@ -310,7 +312,7 @@ export default function Typist({ documents, saveDocuments, notes = [], saveNotes
               >
                 <button 
                   onClick={handleSaveNote}
-                  className="flex items-center space-x-2 bg-executive-gold text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-yellow-600 transition-colors shadow-lg whitespace-nowrap"
+                  className="flex items-center space-x-2 bg-executive-gold text-slate-900 px-4 py-2 rounded-xl text-sm font-medium hover:bg-yellow-600 transition-colors shadow-lg whitespace-nowrap"
                 >
                   <Save size={16} />
                   <span>Save as High Thinking Note</span>
@@ -320,7 +322,7 @@ export default function Typist({ documents, saveDocuments, notes = [], saveNotes
             <h1 className="text-3xl font-bold mb-8 text-slate-900 border-b border-slate-100 pb-4">{activeDoc.title}</h1>
             <div 
               className="prose prose-slate max-w-none prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg"
-              dangerouslySetInnerHTML={{ __html: activeDoc.content || '<p class="text-slate-400 italic">Empty document</p>' }}
+              dangerouslySetInnerHTML={{ __html: activeDoc.content || '<p class="text-slate-500 italic">Empty document</p>' }}
             />
           </div>
         ) : (
@@ -355,7 +357,7 @@ export default function Typist({ documents, saveDocuments, notes = [], saveNotes
           <div className="col-span-full text-center py-16 bg-slate-50 border-slate-200 rounded-3xl border border-slate-200 border-dashed">
             <Keyboard size={48} className="mx-auto text-executive-gold/30 mb-4" />
             <p className="text-lg text-slate-600 font-medium">No documents yet</p>
-            <p className="text-sm text-slate-400 mt-2 max-w-sm mx-auto">
+            <p className="text-sm text-slate-500 mt-2 max-w-sm mx-auto">
               Use the assistant as your personal typist. Create a new document to dictate letters, memos, or long ideas.
             </p>
           </div>
@@ -368,7 +370,7 @@ export default function Typist({ documents, saveDocuments, notes = [], saveNotes
             >
               <div className="flex items-start justify-between mb-3">
                 <FileText className="text-executive-gold opacity-80 group-hover:opacity-100 transition-opacity" size={24} />
-                <span className="text-xs text-slate-400">{new Date(doc.updatedAt).toLocaleDateString()}</span>
+                <span className="text-xs text-slate-500">{new Date(doc.updatedAt).toLocaleDateString()}</span>
               </div>
               <h3 className="text-lg font-medium text-slate-900 mb-2">{doc.title}</h3>
               <p className="text-sm text-slate-500 line-clamp-3 leading-relaxed">

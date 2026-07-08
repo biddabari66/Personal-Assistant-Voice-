@@ -131,9 +131,24 @@ export default function Tasks({ tasks, saveTasks, notes = [], saveNotes }: { tas
 
   const handleSaveEdit = () => {
     if (editingTask) {
-      saveTasks(tasks.map(t => t.id === editingTask.id ? editingTask : t));
+      if (!tasks.find(t => t.id === editingTask.id)) {
+        saveTasks([...tasks, editingTask]);
+      } else {
+        saveTasks(tasks.map(t => t.id === editingTask.id ? editingTask : t));
+      }
       setEditingTask(null);
     }
+  };
+
+  const handleCreateTask = () => {
+    setEditingTask({
+      id: crypto.randomUUID(),
+      title: '',
+      status: 'PENDING',
+      deadline: new Date().toISOString().split('T')[0],
+      priority: 'UNASSIGNED',
+      tags: []
+    });
   };
 
   const getFilteredTasks = () => {
@@ -175,7 +190,7 @@ export default function Tasks({ tasks, saveTasks, notes = [], saveNotes }: { tas
     <div className="space-y-6 max-w-3xl mx-auto pb-20 relative" ref={analysisContainerRef}>
       {selection.show && (
         <div 
-          className="fixed z-50 animate-in fade-in zoom-in-95 duration-200 shadow-xl"
+          className="fixed z-[100] animate-in fade-in zoom-in-95 duration-200 shadow-2xl"
           style={{ 
             left: `${selection.x}px`, 
             top: `${selection.y}px`, 
@@ -184,112 +199,124 @@ export default function Tasks({ tasks, saveTasks, notes = [], saveNotes }: { tas
         >
           <button 
             onClick={handleSaveNote}
-            className="flex items-center space-x-2 bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-slate-800 transition-colors shadow-lg whitespace-nowrap"
+            className="flex items-center space-x-2 bg-gradient-to-r from-executive-gold to-executive-gold-dim text-executive-navy px-5 py-2.5 rounded-xl text-sm font-bold tracking-wide hover:from-amber-400 hover:to-executive-gold transition-all shadow-lg whitespace-nowrap"
           >
             <Save size={16} />
-            <span>Save Highlight as Note</span>
+            <span>Save Highlight</span>
           </button>
         </div>
       )}
 
       {/* Visual Summary Header */}
-      <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-        <h2 className="text-xl font-bold text-slate-900 mb-4">Status Overview</h2>
-        
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <div className="text-3xl font-bold text-executive-gold">{completionPercentage}%</div>
-            <p className="text-xs text-slate-500 uppercase tracking-wider">Completion</p>
+      <div className="bg-white backdrop-blur-md p-5 sm:p-8 rounded-[2rem] shadow-lg border border-slate-200 relative overflow-hidden group">
+        <div className="absolute inset-0 bg-gradient-to-br from-executive-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <div className="relative z-10">
+          <h2 className="text-xl sm:text-2xl font-serif tracking-tight font-bold text-slate-900 mb-6">Status Overview</h2>
+          
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <div className="text-4xl sm:text-5xl font-mono font-light text-executive-gold">{completionPercentage}%</div>
+              <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-widest sm:tracking-[0.2em] font-bold mt-1">Completion</p>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl sm:text-4xl font-mono font-light text-slate-600">{totalTasks}</div>
+              <p className="text-[9px] sm:text-[10px] text-slate-500 uppercase tracking-widest sm:tracking-[0.2em] font-bold mt-1">Total Tasks</p>
+            </div>
           </div>
-          <div className="text-right">
-            <div className="text-2xl font-semibold text-slate-700">{totalTasks}</div>
-            <p className="text-xs text-slate-500 uppercase tracking-wider">Total Tasks</p>
+          
+          {/* Progress Bar */}
+          <div className="w-full bg-slate-100 rounded-full h-2 mb-8 border border-slate-100 overflow-hidden">
+            <div className="bg-gradient-to-r from-executive-gold-dim to-executive-gold h-2 rounded-full transition-all duration-1000 ease-out" style={{ width: `${completionPercentage}%` }}></div>
           </div>
-        </div>
-        
-        {/* Progress Bar */}
-        <div className="w-full bg-slate-100 rounded-full h-3 mb-6">
-          <div className="bg-executive-gold h-3 rounded-full transition-all duration-500" style={{ width: `${completionPercentage}%` }}></div>
-        </div>
 
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div className="bg-red-50 p-3 rounded-2xl">
-            <div className="text-lg font-bold text-red-600">{overdueCount}</div>
-            <div className="text-[10px] text-red-500 uppercase tracking-wider font-semibold">Overdue</div>
-          </div>
-          <div className="bg-amber-50 p-3 rounded-2xl">
-            <div className="text-lg font-bold text-amber-600">{dueTomorrowCount}</div>
-            <div className="text-[10px] text-amber-500 uppercase tracking-wider font-semibold">Tomorrow</div>
-          </div>
-          <div className="bg-green-50 p-3 rounded-2xl">
-            <div className="text-lg font-bold text-green-600">{completedTasks}</div>
-            <div className="text-[10px] text-green-500 uppercase tracking-wider font-semibold">Completed</div>
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
+            <div className="bg-red-500/10 p-2 sm:p-4 rounded-2xl border border-red-500/20">
+              <div className="text-xl sm:text-2xl font-mono text-red-400">{overdueCount}</div>
+              <div className="text-[9px] sm:text-[10px] text-red-500/80 uppercase tracking-widest sm:tracking-[0.1em] font-bold mt-1">Overdue</div>
+            </div>
+            <div className="bg-amber-500/10 p-2 sm:p-4 rounded-2xl border border-amber-500/20">
+              <div className="text-xl sm:text-2xl font-mono text-amber-400">{dueTomorrowCount}</div>
+              <div className="text-[9px] sm:text-[10px] text-amber-500/80 uppercase tracking-widest sm:tracking-[0.1em] font-bold mt-1">Tomorrow</div>
+            </div>
+            <div className="bg-emerald-500/10 p-2 sm:p-4 rounded-2xl border border-emerald-500/20">
+              <div className="text-xl sm:text-2xl font-mono text-emerald-400">{completedTasks}</div>
+              <div className="text-[9px] sm:text-[10px] text-emerald-500/80 uppercase tracking-widest sm:tracking-[0.1em] font-bold mt-1">Completed</div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
-        {['TODAY', 'TOMORROW', 'PAST', 'COMPLETED', 'ALL'].map((f) => (
-          <button
-            key={f}
-            onClick={() => setFilter(f as any)}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-              filter === f 
-                ? 'bg-executive-gold text-slate-900' 
-                : 'bg-white text-slate-600 hover:bg-slate-100'
-            }`}
-          >
-            {f === 'TODAY' && 'Today'}
-            {f === 'TOMORROW' && 'Tomorrow'}
-            {f === 'PAST' && 'Overdue'}
-            {f === 'COMPLETED' && 'Completed'}
-            {f === 'ALL' && 'All Tasks'}
-          </button>
-        ))}
+      {/* Filters & Actions */}
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex space-x-2 sm:space-x-3 overflow-x-auto pb-2 custom-scrollbar">
+          {['TODAY', 'TOMORROW', 'PAST', 'COMPLETED', 'ALL'].map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f as any)}
+              className={`px-5 py-2.5 rounded-xl text-xs font-bold tracking-wider whitespace-nowrap transition-all border ${
+                filter === f 
+                  ? 'bg-executive-gold/20 text-executive-gold border-executive-gold/30 shadow-[0_0_15px_rgba(197,160,89,0.15)]' 
+                  : 'bg-white text-slate-500 border-slate-100 hover:bg-slate-100 hover:text-slate-900'
+              } uppercase`}
+            >
+              {f === 'TODAY' && 'Today'}
+              {f === 'TOMORROW' && 'Tomorrow'}
+              {f === 'PAST' && 'Overdue'}
+              {f === 'COMPLETED' && 'Completed'}
+              {f === 'ALL' && 'All Tasks'}
+            </button>
+          ))}
+        </div>
+        <button
+          onClick={handleCreateTask}
+          className="shrink-0 flex items-center justify-center space-x-2 bg-executive-gold hover:bg-amber-400 text-slate-900 px-5 py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all shadow-sm ml-4"
+        >
+          <Edit2 size={16} />
+          <span className="hidden sm:inline">New Task</span>
+        </button>
       </div>
 
       {/* Task List */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {filteredTasks.length === 0 ? (
-          <div className="text-center py-12 bg-slate-50 border-slate-200 rounded-2xl border border-slate-200 border-dashed">
-            <CheckCircle2 size={48} className="mx-auto text-executive-gold/30 mb-4" />
-            <p className="text-slate-500">No tasks in this view.</p>
-            <p className="text-sm text-slate-400 mt-1">Tap the Hub mic to add one.</p>
+          <div className="text-center py-16 bg-white border-slate-200 rounded-[2rem] border border-dashed">
+            <CheckCircle2 size={56} className="mx-auto text-executive-gold/20 mb-5" />
+            <p className="text-slate-600 font-serif tracking-tight text-xl">No tasks pending.</p>
+            <p className="text-sm text-slate-500 mt-2 font-medium tracking-wide">Command Nia to orchestrate a new directive.</p>
           </div>
         ) : (
           filteredTasks.map(task => (
             <div 
               key={task.id} 
-              className={`flex items-start p-4 rounded-2xl transition-all ${
+              className={`flex items-start p-6 rounded-2xl transition-all duration-300 border ${
                 task.status === 'COMPLETED' 
-                  ? 'bg-slate-50 border-slate-200 opacity-60' 
-                  : 'bg-white border border-slate-200 hover:border-executive-gold/50'
+                  ? 'bg-slate-50 border-slate-100 opacity-50' 
+                  : 'bg-white border-slate-200 hover:border-executive-gold/30 hover:bg-slate-100 shadow-lg'
               }`}
             >
               <button 
                 onClick={() => toggleTask(task.id)}
-                className="mt-1 mr-4 text-executive-gold shrink-0 transition-transform hover:scale-110"
+                className={`mt-0.5 mr-5 shrink-0 transition-transform hover:scale-110 ${task.status === 'COMPLETED' ? 'text-emerald-500' : 'text-executive-gold/70 hover:text-executive-gold'}`}
               >
-                {task.status === 'COMPLETED' ? <CheckCircle2 size={24} /> : <Circle size={24} />}
+                {task.status === 'COMPLETED' ? <CheckCircle2 size={28} /> : <Circle size={28} />}
               </button>
               
               <div className="flex-1 min-w-0">
-                <p className={`text-lg ${task.status === 'COMPLETED' ? 'line-through text-slate-500' : 'text-slate-900'}`}>
+                <p className={`text-xl font-medium tracking-wide ${task.status === 'COMPLETED' ? 'line-through text-slate-500' : 'text-slate-700'}`}>
                   {task.title}
                 </p>
-                <div className="flex items-center space-x-3 mt-2 text-xs">
-                  <div className="flex bg-slate-100 rounded-lg p-0.5" onClick={(e) => e.stopPropagation()}>
+                <div className="flex flex-wrap items-center gap-3 mt-3 text-xs">
+                  <div className="flex bg-slate-100 rounded-lg p-1 border border-slate-100" onClick={(e) => e.stopPropagation()}>
                     {(['LOW', 'MEDIUM', 'HIGH'] as const).map(p => (
                       <button
                         key={p}
                         onClick={() => saveTasks(tasks.map(t => t.id === task.id ? { ...t, priority: p } : t))}
-                        className={`px-3 py-1 rounded-md text-[10px] font-bold tracking-wider transition-colors ${
+                        className={`px-3 py-1.5 rounded-md text-[10px] font-bold tracking-[0.1em] transition-colors ${
                           task.priority === p 
-                            ? p === 'HIGH' ? 'bg-red-100 text-red-600 shadow-sm' 
-                            : p === 'MEDIUM' ? 'bg-amber-100 text-amber-600 shadow-sm'
-                            : 'bg-green-100 text-green-600 shadow-sm'
-                            : 'text-slate-400 hover:text-slate-600'
+                            ? p === 'HIGH' ? 'bg-red-500/20 text-red-400 shadow-sm border-red-500/30 border' 
+                            : p === 'MEDIUM' ? 'bg-amber-500/20 text-amber-400 shadow-sm border-amber-500/30 border'
+                            : 'bg-emerald-500/20 text-emerald-400 shadow-sm border-emerald-500/30 border'
+                            : 'text-slate-500 hover:text-slate-300 border border-transparent'
                         }`}
                       >
                         {p}
@@ -303,13 +330,13 @@ export default function Tasks({ tasks, saveTasks, notes = [], saveNotes }: { tas
                     const isDueTomorrow = task.status === 'PENDING' && task.deadline === tomorrowStr;
                     
                     return (
-                      <span className={`flex items-center font-medium ${
-                        isOverdue ? 'text-red-600 bg-red-50 px-2 py-0.5 rounded' :
-                        isDueToday ? 'text-amber-600 bg-amber-50 px-2 py-0.5 rounded' :
-                        isDueTomorrow ? 'text-blue-600 bg-blue-50 px-2 py-0.5 rounded' :
-                        'text-slate-500'
+                      <span className={`flex items-center font-medium px-3 py-1.5 rounded-lg border text-[11px] tracking-wide ${
+                        isOverdue ? 'text-red-400 bg-red-900/20 border-red-500/30' :
+                        isDueToday ? 'text-amber-400 bg-amber-900/20 border-amber-500/30' :
+                        isDueTomorrow ? 'text-blue-400 bg-blue-900/20 border-blue-500/30' :
+                        'text-slate-500 bg-white border-slate-200'
                       }`}>
-                        <Clock size={12} className="mr-1" />
+                        <Clock size={12} className="mr-1.5" />
                         {isOverdue ? `Overdue (${task.deadline})` : 
                          isDueToday ? `Due Today` :
                          isDueTomorrow ? `Due Tomorrow` : 
@@ -319,7 +346,7 @@ export default function Tasks({ tasks, saveTasks, notes = [], saveNotes }: { tas
                   })()}
                   
                   {task.tags?.map(tag => (
-                    <span key={tag} className="text-slate-400 bg-slate-50 px-2 py-0.5 rounded-full">
+                    <span key={tag} className="text-slate-500 bg-white border border-slate-200 px-3 py-1.5 rounded-lg text-[11px] tracking-wider uppercase font-bold">
                       #{tag}
                     </span>
                   ))}
@@ -327,27 +354,27 @@ export default function Tasks({ tasks, saveTasks, notes = [], saveNotes }: { tas
                 
                 {/* Intelligent Analysis Rendering */}
                 {analysisState[task.id] && (
-                  <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-executive-gold/20 text-sm relative group">
+                  <div className="mt-5 p-5 bg-slate-50 rounded-2xl border border-executive-gold/20 text-sm relative group">
                     {analysisState[task.id].loading ? (
-                      <div className="flex items-center text-executive-gold animate-pulse font-medium">
-                        <Brain size={16} className="mr-2" /> Thinking...
+                      <div className="flex items-center text-executive-gold animate-pulse font-bold tracking-wide">
+                        <Brain size={18} className="mr-3" /> Processing...
                       </div>
                     ) : analysisState[task.id].error ? (
-                      <div className="text-red-500 text-xs">Error: {analysisState[task.id].error}</div>
+                      <div className="text-red-400 text-xs bg-red-500/10 p-3 rounded-lg">Error: {analysisState[task.id].error}</div>
                     ) : (
                       <>
-                        <div className="flex justify-between items-start mb-2">
-                          <span className="text-xs font-bold text-executive-gold uppercase tracking-wider">AI Analysis</span>
+                        <div className="flex justify-between items-start mb-4">
+                          <span className="text-[10px] font-bold text-executive-gold uppercase tracking-[0.2em]">Nia Analysis</span>
                           <button 
                             onClick={() => saveFullAnalysisAsNote(analysisState[task.id].data || '', task.title)}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1 text-xs font-semibold text-slate-500 hover:text-slate-900 bg-white border border-slate-200 px-2 py-1 rounded-lg shadow-sm"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center space-x-1.5 text-[10px] font-bold text-slate-600 hover:text-slate-900 bg-slate-50 border border-slate-300 px-3 py-1.5 rounded-lg shadow-sm tracking-wider uppercase"
                             title="Save Full Analysis to Notes"
                           >
                             <Save size={12} />
                             <span>Save to Notes</span>
                           </button>
                         </div>
-                        <div className="markdown-body prose prose-sm max-w-none text-slate-700">
+                        <div className="markdown-body prose prose-sm prose-invert max-w-none text-slate-600">
                           <ReactMarkdown>{analysisState[task.id].data || ''}</ReactMarkdown>
                         </div>
                       </>
@@ -355,28 +382,28 @@ export default function Tasks({ tasks, saveTasks, notes = [], saveNotes }: { tas
                   </div>
                 )}
               </div>
-              <div className="flex flex-col sm:flex-row space-y-1 sm:space-y-0 sm:space-x-1 ml-4 self-start">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 ml-5 self-start shrink-0">
                 <button 
                   onClick={() => handleAnalyzeTask(task)}
                   disabled={analysisState[task.id]?.loading}
-                  className={`transition-colors p-2 rounded-full ${analysisState[task.id]?.loading ? 'text-executive-gold/50 bg-slate-50 cursor-not-allowed' : 'text-slate-400 hover:text-executive-gold hover:bg-slate-50'}`}
+                  className={`transition-all p-2.5 rounded-xl border ${analysisState[task.id]?.loading ? 'text-executive-gold/50 bg-white border-slate-100 cursor-not-allowed' : 'text-slate-500 border-slate-100 hover:text-executive-gold hover:border-executive-gold/30 hover:bg-executive-gold/10'} shadow-sm`}
                   title="Intelligent Analysis"
                 >
-                  <Brain size={16} />
+                  <Brain size={18} />
                 </button>
                 <button 
                   onClick={() => setEditingTask(task)}
-                  className="text-slate-400 hover:text-executive-gold transition-colors p-2 rounded-full hover:bg-slate-50"
+                  className="transition-all p-2.5 rounded-xl border border-slate-100 text-slate-500 hover:text-slate-900 hover:border-slate-300 hover:bg-slate-100 shadow-sm"
                   title="Edit Task"
                 >
-                  <Edit2 size={16} />
+                  <Edit2 size={18} />
                 </button>
                 <button 
                   onClick={() => deleteTask(task.id)}
-                  className="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-slate-50"
+                  className="transition-all p-2.5 rounded-xl border border-slate-100 text-slate-500 hover:text-red-400 hover:border-red-500/30 hover:bg-red-500/10 shadow-sm"
                   title="Delete Task"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 size={18} />
                 </button>
               </div>
             </div>
@@ -386,40 +413,42 @@ export default function Tasks({ tasks, saveTasks, notes = [], saveNotes }: { tas
 
       {/* Edit Modal */}
       {editingTask && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 animate-in fade-in p-4">
-          <div className="bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold">Edit Task</h3>
-              <button onClick={() => setEditingTask(null)} className="p-2 hover:bg-slate-100 rounded-full">
-                <X size={20} />
+        <div className="fixed inset-0 bg-executive-navy/80 backdrop-blur-md flex items-center justify-center z-[100] animate-in fade-in p-4">
+          <div className="bg-slate-50 border border-slate-200 w-full max-w-lg rounded-[2rem] p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-8">
+              <h3 className="text-2xl font-serif tracking-tight font-bold text-slate-900">Edit Directive</h3>
+              <button onClick={() => setEditingTask(null)} className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors">
+                <X size={24} />
               </button>
             </div>
-            <div className="space-y-4">
+            
+            <div className="space-y-6">
               <div>
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Title</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2 block">Title</label>
                 <input 
                   type="text" 
                   value={editingTask.title} 
                   onChange={e => setEditingTask({...editingTask, title: e.target.value})}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-executive-gold/50"
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-5 py-4 focus:outline-none focus:border-executive-gold focus:ring-1 focus:ring-executive-gold transition-all"
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Deadline (YYYY-MM-DD)</label>
+                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-2 block">Deadline (YYYY-MM-DD)</label>
                 <input 
                   type="text" 
                   value={editingTask.deadline || ''} 
                   onChange={e => setEditingTask({...editingTask, deadline: e.target.value})}
                   placeholder="e.g. 2026-07-01"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-executive-gold/50"
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-600 rounded-xl px-5 py-4 focus:outline-none focus:border-executive-gold focus:ring-1 focus:ring-executive-gold transition-all font-mono"
                 />
               </div>
+              
               <div className="pt-4">
                 <button 
                   onClick={handleSaveEdit}
-                  className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl py-4 font-semibold text-lg flex items-center justify-center transition-colors"
+                  className="w-full bg-gradient-to-r from-executive-gold to-executive-gold-dim hover:from-amber-400 hover:to-executive-gold text-executive-navy rounded-xl py-4 font-bold tracking-wide text-lg flex items-center justify-center transition-all shadow-lg hover:shadow-executive-gold/20 transform hover:scale-[1.02]"
                 >
-                  <Check size={20} className="mr-2" /> Save Changes
+                  <Check size={20} className="mr-2" /> Save Directive
                 </button>
               </div>
             </div>

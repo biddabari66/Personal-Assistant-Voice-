@@ -34,8 +34,11 @@ export interface Note {
 export interface Reminder {
   id: string;
   message: string;
-  triggerTime: string;
+  triggerTime: string; // Can be ISO datetime or "HH:mm" for recurring
   recurring: boolean;
+  active?: boolean;
+  voiceAlarm?: boolean;
+  days?: number[]; // 0 = Sunday, 1 = Monday, etc.
 }
 
 export interface Document {
@@ -60,14 +63,14 @@ export interface MDProfile {
   geminiApiKey: string;
 }
 
-export interface ARIAAction {
+export interface NIAAction {
   type: string;
   data: any;
 }
 
-export interface ARIAResponse {
+export interface NIAResponse {
   intent: string;
   voiceResponse: string;
-  action?: ARIAAction;
+  action?: NIAAction;
   followUp?: boolean;
 }

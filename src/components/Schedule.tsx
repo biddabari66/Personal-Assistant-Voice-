@@ -28,9 +28,26 @@ export default function Schedule({ events, saveEvents }: { events: Event[], save
 
   const handleSaveEdit = () => {
     if (editingEvent && saveEvents) {
-      saveEvents(events.map(e => e.id === editingEvent.id ? editingEvent : e));
+      if (!events.find(e => e.id === editingEvent.id)) {
+        saveEvents([...events, editingEvent]);
+      } else {
+        saveEvents(events.map(e => e.id === editingEvent.id ? editingEvent : e));
+      }
       setEditingEvent(null);
     }
+  };
+
+  const handleCreateEvent = () => {
+    setEditingEvent({
+      id: crypto.randomUUID(),
+      title: '',
+      datetime: new Date().toISOString(),
+      duration: '1 hour',
+      attendees: [],
+      status: 'CONFIRMED',
+      location: '',
+      notes: ''
+    });
   };
 
   const handleCopy = (event: Event) => {
@@ -102,7 +119,7 @@ export default function Schedule({ events, saveEvents }: { events: Event[], save
                     {saveEvents && (
                       <button 
                         onClick={() => handleToggleComplete(event)}
-                        className={`text-slate-400 hover:text-green-600 transition-colors p-2 rounded-full hover:bg-slate-50 ${status === 'COMPLETED' && 'text-green-500'}`}
+                        className={`text-slate-500 hover:text-green-600 transition-colors p-2 rounded-full hover:bg-slate-50 ${status === 'COMPLETED' && 'text-green-500'}`}
                         title={status === 'COMPLETED' ? "Reopen Meeting" : "Mark as Completed"}
                       >
                         <CheckCircle2 size={16} />
@@ -110,7 +127,7 @@ export default function Schedule({ events, saveEvents }: { events: Event[], save
                     )}
                     <button 
                       onClick={() => handleCopy(event)}
-                      className="text-slate-400 hover:text-executive-gold transition-colors p-2 rounded-full hover:bg-slate-50"
+                      className="text-slate-500 hover:text-executive-gold transition-colors p-2 rounded-full hover:bg-slate-50"
                       title="Copy Details"
                     >
                       {copiedId === event.id ? <CheckCircle2 size={16} className="text-green-500" /> : <Copy size={16} />}
@@ -118,7 +135,7 @@ export default function Schedule({ events, saveEvents }: { events: Event[], save
                     {saveEvents && (
                       <button 
                         onClick={() => setEditingEvent(event)}
-                        className="text-slate-400 hover:text-executive-gold transition-colors p-2 rounded-full hover:bg-slate-50"
+                        className="text-slate-500 hover:text-executive-gold transition-colors p-2 rounded-full hover:bg-slate-50"
                         title="Edit Meeting"
                       >
                         <Edit2 size={16} />
@@ -136,9 +153,18 @@ export default function Schedule({ events, saveEvents }: { events: Event[], save
 
   return (
     <div className="space-y-10 max-w-3xl mx-auto pb-20">
-      <div>
-        <h2 className="text-2xl font-semibold mb-1">Schedule</h2>
-        <p className="text-slate-500 text-sm">Your upcoming commitments and past meetings</p>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-2xl font-semibold mb-1">Schedule</h2>
+          <p className="text-slate-500 text-sm">Your upcoming commitments and past meetings</p>
+        </div>
+        <button
+          onClick={handleCreateEvent}
+          className="shrink-0 flex items-center justify-center space-x-2 bg-executive-gold hover:bg-amber-400 text-slate-900 px-5 py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all shadow-sm ml-4"
+        >
+          <Edit2 size={16} />
+          <span className="hidden sm:inline">New Meeting</span>
+        </button>
       </div>
 
       <div className="space-y-6">

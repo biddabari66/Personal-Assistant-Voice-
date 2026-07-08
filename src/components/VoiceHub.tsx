@@ -4,16 +4,18 @@ import { useLiveApi } from '../hooks/useLiveApi';
 
 export default function VoiceHub({ data }: { data: any }) {
   const [recentActions, setRecentActions] = useState<{id: string, text: string}[]>([]);
+  const [actionToast, setActionToast] = useState<string | null>(null);
   
   const handleAction = useCallback((action: any) => {
     executeAction(action);
   }, [data]);
   
-  const { isConnected, isConnecting, isError, transcript, riaTranscript, connect, disconnect, sendContextUpdate } = useLiveApi(handleAction);
+  const { isConnected, isConnecting, isError, transcript, niaTranscript, connect, disconnect, sendContextUpdate } = useLiveApi(handleAction);
 
   const toggleConnection = () => {
     if (isConnected || isConnecting) {
       disconnect();
+      setActionToast(null);
     } else {
       setRecentActions([]); // Clear on new connection
       const totalTasks = data.tasks.length;
@@ -55,6 +57,10 @@ export default function VoiceHub({ data }: { data: any }) {
 
   const addActionLog = (text: string) => {
     setRecentActions(prev => [...prev, { id: crypto.randomUUID(), text }]);
+    setActionToast(text);
+    setTimeout(() => {
+      setActionToast(prev => prev === text ? null : prev);
+    }, 4000);
     // Also save to global command log
     data.saveCommandLog([...data.commandLog, {
       id: crypto.randomUUID(),
@@ -69,15 +75,16 @@ export default function VoiceHub({ data }: { data: any }) {
     const now = new Date().toISOString();
 
     if (type === 'ADD_TASK') {
+      const taskTitle = payload.title || payload.content || 'New Task';
       data.saveTasks([...data.tasks, {
         id: crypto.randomUUID(),
-        title: payload.title,
+        title: taskTitle,
         priority: payload.priority || 'UNASSIGNED',
         deadline: payload.deadline || now.split('T')[0],
         status: 'PENDING',
         tags: payload.tags || []
       }]);
-      addActionLog(`Added task: ${payload.title}`);
+      addActionLog(`Added task: ${taskTitle}`);
     } else if (type === 'EDIT_TASK') {
       let taskTitle = payload.title || "Task";
       data.saveTasks(data.tasks.map((t: any) => {
@@ -88,14 +95,15 @@ export default function VoiceHub({ data }: { data: any }) {
       }));
       addActionLog(`Updated task: ${taskTitle}`);
     } else if (type === 'ADD_NOTE') {
+      const noteContent = payload.content || payload.title || 'Empty Note';
       data.saveNotes([...data.notes, {
         id: crypto.randomUUID(),
-        content: payload.content || payload.title,
+        content: noteContent,
         type: payload.type || 'idea',
         timestamp: now,
         tags: payload.tags || []
       }]);
-      addActionLog(`Saved note: ${payload.content || payload.title}`);
+      addActionLog(`Saved note: ${noteContent.substring(0, 30)}...`);
     } else if (type === 'EDIT_NOTE') {
       let searchContent = payload.content || payload.title || "Note";
       data.saveNotes(data.notes.map((n: any) => {
@@ -155,39 +163,40 @@ export default function VoiceHub({ data }: { data: any }) {
         <div className="relative">
           {/* Ripple effect when listening */}
           {(isConnected || isConnecting) && (
-            <div className="absolute inset-0 bg-blue-100 rounded-full animate-ping scale-150"></div>
+            <div className="absolute inset-0 bg-executive-accent/30 rounded-full animate-ping scale-[1.75] mix-blend-screen duration-1000"></div>
           )}
           
           <button
             onClick={toggleConnection}
-            className={`relative z-10 w-32 h-32 rounded-full flex items-center justify-center transition-all duration-300 shadow-[0_0_40px_rgba(201,168,76,0.15)]
+            className={`relative z-10 w-36 h-36 rounded-full flex items-center justify-center transition-all duration-500 shadow-2xl backdrop-blur-md
               ${isConnected 
-                ? 'bg-blue-600 text-white scale-110 shadow-[0_0_60px_rgba(37,99,235,0.4)]' 
+                ? 'bg-gradient-to-br from-executive-accent to-blue-600 text-slate-900 scale-110 shadow-[0_0_60px_rgba(56,189,248,0.4)]' 
                 : isConnecting
-                ? 'bg-blue-400 text-white scale-105 shadow-[0_0_40px_rgba(37,99,235,0.2)]'
-                : 'bg-white border-2 border-executive-gold text-executive-gold hover:bg-slate-100'
+                ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-slate-900 scale-105 shadow-[0_0_40px_rgba(56,189,248,0.2)]'
+                : 'bg-white border border-slate-200 text-executive-gold hover:bg-slate-100 hover:shadow-[0_0_40px_rgba(197,160,89,0.15)]'
               }`}
             disabled={isConnecting}
           >
+            <div className="absolute inset-0 rounded-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/20 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity"></div>
             {isConnecting ? (
-              <Loader2 size={48} className="animate-spin" />
+              <Loader2 size={56} className="animate-spin relative z-10" />
             ) : isConnected ? (
-              <Radio size={48} className="animate-pulse" />
+              <Radio size={56} className="animate-pulse relative z-10" />
             ) : (
-              <Mic size={48} />
+              <Mic size={56} className="relative z-10" />
             )}
           </button>
         </div>
 
         {/* Status Text */}
         <div className="h-12 flex flex-col items-center justify-center">
-          <p className="text-xl font-light text-slate-600">
-             {isConnecting ? "Connecting to Ria..." :
-             isConnected ? "Ria is listening. Speak naturally..." : 
-             "Tap to connect to Ria"}
+          <p className="text-xl font-medium tracking-wide text-slate-600">
+             {isConnecting ? "Establishing connection to Nia..." :
+             isConnected ? "Nia is listening. Speak naturally..." : 
+             "Tap to initialize Nia"}
           </p>
           {isError && (
-             <div className="bg-red-50 text-red-600 text-sm mt-4 p-3 rounded-lg border border-red-100 max-w-md text-center flex items-start">
+             <div className="bg-red-500/10 text-red-400 text-sm mt-4 p-3 rounded-xl border border-red-500/20 max-w-md text-center flex items-start shadow-sm">
                <AlertTriangle size={16} className="mt-0.5 mr-2 shrink-0" />
                <p>{isError}</p>
              </div>
@@ -195,21 +204,21 @@ export default function VoiceHub({ data }: { data: any }) {
         </div>
 
         {/* Live Transcript Box */}
-        {(isConnected || transcript || riaTranscript) && (
-          <div className="w-full max-w-2xl bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col space-y-4 max-h-[350px] overflow-hidden">
+        {(isConnected || transcript || niaTranscript) && (
+          <div className="w-full max-w-2xl bg-white border border-slate-200 rounded-[2rem] p-8 shadow-2xl backdrop-blur-md flex flex-col space-y-6">
             {/* User Transcript */}
-            <div className="flex-1 flex flex-col overflow-y-auto min-h-[60px] pb-2 border-b border-slate-100 last:border-0">
-               <div className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">You</div>
-               <p className="text-lg leading-relaxed text-slate-700 flex flex-wrap items-end gap-x-1.5 gap-y-2">
+            <div className="flex-1 flex flex-col overflow-y-auto min-h-[80px] pb-6 border-b border-slate-200 last:border-0 custom-scrollbar pr-2">
+               <div className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-3">You</div>
+               <p className="text-2xl font-serif tracking-tight leading-relaxed text-slate-700 flex flex-wrap items-end gap-x-2 gap-y-2">
                  {!transcript ? (
-                   <span className="italic text-slate-400">Listening...</span>
+                   <span className="italic text-slate-500 font-sans text-lg">Awaiting input...</span>
                  ) : (
                    transcript.split(' ').map((word, i, arr) => {
                      const distance = arr.length - 1 - i;
-                     let scaleClass = 'scale-100 opacity-80';
-                     if (distance === 0) scaleClass = 'scale-110 font-semibold text-blue-700';
-                     else if (distance === 1) scaleClass = 'scale-105 font-medium text-blue-600';
-                     else if (distance === 2) scaleClass = 'scale-100 text-blue-500';
+                     let scaleClass = 'scale-100 opacity-60';
+                     if (distance === 0) scaleClass = 'scale-110 font-bold text-slate-900 drop-shadow-md';
+                     else if (distance === 1) scaleClass = 'scale-105 font-medium text-slate-800';
+                     else if (distance === 2) scaleClass = 'scale-100 text-slate-700';
                      return (
                        <span key={i} className={`transition-all duration-300 origin-bottom-left inline-block ${scaleClass}`}>
                          {word}
@@ -220,12 +229,12 @@ export default function VoiceHub({ data }: { data: any }) {
                </p>
             </div>
             
-            {/* Ria Transcript */}
-            {(riaTranscript) && (
-              <div className="flex-1 flex flex-col overflow-y-auto min-h-[60px] pt-2">
-                 <div className="text-xs font-bold text-executive-gold uppercase tracking-widest mb-2">Ria</div>
-                 <p className="text-lg leading-relaxed text-slate-800">
-                   {riaTranscript}
+            {/* Nia Transcript */}
+            {(niaTranscript) && (
+              <div className="flex-1 flex flex-col overflow-y-auto min-h-[80px] pt-2 custom-scrollbar pr-2">
+                 <div className="text-[10px] font-bold text-executive-gold uppercase tracking-[0.2em] mb-3">Nia</div>
+                 <p className="text-2xl font-serif tracking-tight leading-relaxed text-slate-900">
+                   {niaTranscript}
                  </p>
               </div>
             )}
@@ -235,66 +244,77 @@ export default function VoiceHub({ data }: { data: any }) {
 
       {/* Right Column: Assistant Overview (Only visible when connected) */}
       {(isConnected || transcript) && (
-        <div className="w-full lg:w-1/2 flex flex-col space-y-6 animate-in fade-in slide-in-from-right-8 duration-500 max-h-[80vh] overflow-y-auto pr-4 pb-12">
+        <div className="w-full lg:w-1/2 flex flex-col space-y-6 animate-in fade-in slide-in-from-right-8 duration-500 overflow-y-visible pr-4 pb-12">
           
           {/* Assistant's Recent Actions */}
-          <div className="bg-white rounded-2xl p-6 border-l-4 border-executive-gold shadow-sm">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="bg-executive-gold/20 p-2 rounded-full shrink-0">
-                <Volume2 size={20} className="text-executive-gold" />
+          <div className="bg-white rounded-[2rem] p-8 border-l-4 border-executive-gold shadow-lg backdrop-blur-md relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-executive-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div className="relative z-10">
+              <div className="flex items-center space-x-4 mb-6">
+                <div className="bg-executive-gold/20 p-2.5 rounded-full shrink-0 shadow-[0_0_15px_rgba(197,160,89,0.2)]">
+                  <Volume2 size={24} className="text-executive-gold" />
+                </div>
+                <p className="text-sm font-bold text-executive-gold tracking-widest uppercase">System Actions</p>
               </div>
-              <p className="text-sm font-semibold text-executive-gold">System Actions</p>
+              {recentActions.length === 0 ? (
+                <p className="text-sm text-slate-500 italic">Awaiting instructions.</p>
+              ) : (
+                <div className="flex flex-col space-y-3 w-full">
+                  {recentActions.map(action => (
+                    <p key={action.id} className="text-slate-600 text-sm leading-relaxed bg-white p-4 rounded-xl border border-slate-100 animate-in fade-in slide-in-from-bottom-2 shadow-sm font-medium">
+                      {action.text}
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
-            {recentActions.length === 0 ? (
-              <p className="text-sm text-slate-400 italic">No actions taken yet in this session.</p>
-            ) : (
-              <div className="flex flex-col space-y-3 w-full">
-                {recentActions.map(action => (
-                  <p key={action.id} className="text-slate-700 text-sm leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100 animate-in fade-in slide-in-from-bottom-2">
-                    {action.text}
-                  </p>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Mini Tasks Overview */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Pending Tasks</h4>
+          <div className="bg-white p-7 rounded-[2rem] border border-slate-200 shadow-lg backdrop-blur-md">
+             <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-5">Pending Tasks</h4>
              <div className="space-y-3">
                {data.tasks.filter((t: any) => t.status === 'PENDING').slice(0, 5).map((t: any) => (
-                 <div key={t.id} className="text-sm text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100 flex justify-between items-center">
-                    <span className="font-medium truncate pr-2">{t.title}</span>
-                    <span className={`text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider ${
-                      t.priority === 'HIGH' ? 'bg-red-100 text-red-600' :
-                      t.priority === 'MEDIUM' ? 'bg-amber-100 text-amber-600' :
-                      t.priority === 'LOW' ? 'bg-green-100 text-green-600' :
-                      'bg-slate-200 text-slate-600'
+                 <div key={t.id} className="text-sm text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-100 flex justify-between items-center hover:bg-black/40 transition-colors">
+                    <span className="font-semibold truncate pr-3">{t.title}</span>
+                    <span className={`text-[10px] px-2.5 py-1 rounded-md font-bold uppercase tracking-widest border ${
+                      t.priority === 'HIGH' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                      t.priority === 'MEDIUM' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                      t.priority === 'LOW' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                      'bg-white text-slate-500 border-slate-200'
                     }`}>{t.priority}</span>
                  </div>
                ))}
                {data.tasks.filter((t: any) => t.status === 'PENDING').length === 0 && (
-                 <p className="text-sm text-slate-400 italic">No pending tasks.</p>
+                 <p className="text-sm text-slate-500 italic">No pending tasks.</p>
                )}
              </div>
           </div>
              
           {/* Mini Schedule Overview */}
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Upcoming Meetings</h4>
+          <div className="bg-white p-7 rounded-[2rem] border border-slate-200 shadow-lg backdrop-blur-md">
+             <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-5">Upcoming Meetings</h4>
              <div className="space-y-3">
                {data.events.filter((e: any) => new Date(e.datetime) >= new Date()).sort((a: any, b: any) => new Date(a.datetime).getTime() - new Date(b.datetime).getTime()).slice(0, 5).map((e: any) => (
-                 <div key={e.id} className="text-sm text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                    <div className="font-semibold text-slate-800">{e.title}</div>
-                    <div className="text-xs text-slate-500 mt-1">{new Date(e.datetime).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</div>
+                 <div key={e.id} className="text-sm text-slate-600 bg-slate-50 p-4 rounded-xl border border-slate-100 hover:bg-black/40 transition-colors">
+                    <div className="font-semibold text-slate-900 tracking-wide">{e.title}</div>
+                    <div className="text-[11px] text-executive-gold font-mono mt-1.5 font-bold tracking-wider uppercase">{new Date(e.datetime).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</div>
                  </div>
                ))}
                {data.events.filter((e: any) => new Date(e.datetime) >= new Date()).length === 0 && (
-                 <p className="text-sm text-slate-400 italic">No upcoming meetings.</p>
+                 <p className="text-sm text-slate-500 italic">No upcoming meetings.</p>
                )}
              </div>
           </div>
           
+        </div>
+      )}
+      {actionToast && (
+        <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/30 text-emerald-400 px-6 py-3 rounded-full shadow-lg shadow-emerald-900/20 flex items-center space-x-3">
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+            <span className="font-bold tracking-wide text-sm">{actionToast}</span>
+          </div>
         </div>
       )}
     </div>

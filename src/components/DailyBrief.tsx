@@ -95,14 +95,14 @@ export default function DailyBrief({ data }: { data: any }) {
     <div className="max-w-4xl mx-auto space-y-10 pb-24 px-2">
       <div className="text-center py-10 bg-white rounded-3xl shadow-sm border border-slate-200 mt-4">
         <Sun size={64} className="mx-auto text-executive-gold mb-6" />
-        <h2 className="text-5xl font-serif font-bold mb-4 text-slate-900">{getGreeting()}, {data.profile.salutation}</h2>
+        <h2 className="text-5xl font-serif tracking-tight font-bold mb-4 text-slate-900">{getGreeting()}, {data.profile.salutation}</h2>
         <p className="text-xl text-slate-700 font-medium">{t.subGreeting}</p>
       </div>
 
       {/* Power Three moved to top */}
       <div className="bg-white shadow-xl rounded-3xl p-8 border-2 border-executive-gold relative overflow-hidden">
         <div className="absolute top-0 left-0 w-2 h-full bg-executive-gold"></div>
-        <h3 className="text-slate-900 font-serif font-bold text-2xl flex items-center mb-8 border-b-2 border-slate-100 pb-4">
+        <h3 className="text-slate-900 font-serif tracking-tight font-bold text-2xl flex items-center mb-8 border-b-2 border-slate-100 pb-4">
           <Target className="mr-3 text-executive-gold" size={28} /> {t.powerThree}
         </h3>
         
@@ -112,7 +112,7 @@ export default function DailyBrief({ data }: { data: any }) {
           <div className="space-y-6">
           {powerThree.map((task: any, index: number) => (
             <div key={task.id} className="flex items-start bg-gradient-to-r from-slate-50 to-white p-5 rounded-2xl border border-executive-gold/20 shadow-sm relative overflow-hidden transition-all hover:shadow-md hover:border-executive-gold/50">
-              <div className="w-12 h-12 rounded-full bg-executive-gold text-white font-extrabold text-xl flex items-center justify-center mr-6 shrink-0 shadow-inner">
+              <div className="w-12 h-12 rounded-full bg-executive-gold text-slate-900 font-extrabold text-xl flex items-center justify-center mr-6 shrink-0 shadow-inner">
                 {index + 1}
               </div>
               <div>
@@ -128,7 +128,7 @@ export default function DailyBrief({ data }: { data: any }) {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Task Completion Chart */}
         <div className="bg-white shadow-md rounded-3xl p-8 border border-slate-200 flex flex-col items-center justify-center">
-          <h3 className="text-slate-900 font-serif font-bold text-2xl flex items-center mb-6 self-start border-b-2 border-executive-gold pb-2 w-full">
+          <h3 className="text-slate-900 font-serif tracking-tight font-bold text-2xl flex items-center mb-6 self-start border-b-2 border-executive-gold pb-2 w-full">
             <Activity className="mr-3 text-executive-gold" size={28} /> {t.progress}
           </h3>
           <div className="w-56 h-56 relative">
@@ -165,7 +165,7 @@ export default function DailyBrief({ data }: { data: any }) {
 
         {/* Schedule Overview */}
         <div className="bg-white shadow-md rounded-3xl p-8 border border-slate-200">
-          <h3 className="text-slate-900 font-serif font-bold text-2xl flex items-center mb-8 border-b-2 border-executive-gold pb-2 w-full">
+          <h3 className="text-slate-900 font-serif tracking-tight font-bold text-2xl flex items-center mb-8 border-b-2 border-executive-gold pb-2 w-full">
             <Zap className="mr-3 text-executive-gold" size={28} /> {t.engagements}
           </h3>
           
@@ -180,7 +180,7 @@ export default function DailyBrief({ data }: { data: any }) {
                     <p className="text-lg text-slate-600 font-medium">{event.duration}</p>
                   </div>
                   <div className="text-left sm:text-right">
-                    <p className="text-executive-gold font-extrabold text-2xl bg-slate-900 px-4 py-2 rounded-xl inline-block">
+                    <p className="text-executive-gold font-extrabold text-2xl bg-slate-50 px-4 py-2 rounded-xl inline-block">
                       {new Date(event.datetime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
                     </p>
                   </div>

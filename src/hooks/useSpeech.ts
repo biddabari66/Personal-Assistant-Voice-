@@ -97,14 +97,19 @@ export function useSpeech() {
       }
     }
 
-    if ('speechSynthesis' in window) {
+        if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.95; 
+      
+      // Store globally to prevent garbage collection
+      (window as any)._activeUtterance = utterance;
+      
+      utterance.rate = 0.95;
       utterance.pitch = 1;
       
-      if (onEnd) utterance.onend = onEnd;
+      if (onEnd) {
+        utterance.onend = onEnd;
+      }
       
       window.speechSynthesis.speak(utterance);
     } else {

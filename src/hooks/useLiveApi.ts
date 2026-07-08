@@ -26,7 +26,7 @@ export function useLiveApi(onAction: (action: any) => void) {
   const [isError, setIsError] = useState<string | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [transcript, setTranscript] = useState('');
-  const [riaTranscript, setRiaTranscript] = useState('');
+  const [niaTranscript, setNiaTranscript] = useState('');
   const wsRef = useRef<WebSocket | null>(null);
   const recognitionRef = useRef<any>(null);
   
@@ -94,11 +94,6 @@ export function useLiveApi(onAction: (action: any) => void) {
         if (ws.readyState === WebSocket.OPEN) {
           let data = e.inputBuffer.getChannelData(0);
           
-          // Software mute to prevent the assistant from hearing its own voice
-          // and triggering false interruptions when using device speakers.
-          if (activeSourcesRef.current.size > 0) {
-            data = new Float32Array(data.length); // Send silence
-          }
           
           const base64 = pcmToBase64(data);
           ws.send(JSON.stringify({ audio: base64 }));
@@ -120,7 +115,7 @@ export function useLiveApi(onAction: (action: any) => void) {
         }
         
         if (msg.text) {
-          setRiaTranscript(prev => {
+          setNiaTranscript(prev => {
             const updated = prev + msg.text;
             const words = updated.split(' ');
             if (words.length > 25) {
@@ -131,7 +126,7 @@ export function useLiveApi(onAction: (action: any) => void) {
         }
         
         if (msg.interrupted) {
-           setRiaTranscript(''); // Clear Ria's transcript when interrupted
+           setNiaTranscript(''); // Clear Nia's transcript when interrupted
            activeSourcesRef.current.forEach(source => {
              try { source.stop(); } catch (e) {}
            });
@@ -192,11 +187,32 @@ export function useLiveApi(onAction: (action: any) => void) {
         
         reco.onresult = (event: any) => {
           let interimTranscript = '';
+          let newlySpoken = '';
           for (let i = event.resultIndex; i < event.results.length; ++i) {
             if (event.results[i].isFinal) {
               finalTranscript += event.results[i][0].transcript + ' ';
+              newlySpoken += event.results[i][0].transcript;
             } else {
               interimTranscript += event.results[i][0].transcript + ' ';
+              newlySpoken += event.results[i][0].transcript;
+            }
+          }
+          
+          if (newlySpoken.trim().length > 3) {
+            // Client-side force interrupt for immediate responsiveness
+            if (activeSourcesRef.current.size > 0) {
+              activeSourcesRef.current.forEach(source => {
+                try { source.stop(); } catch (e) {}
+              });
+              activeSourcesRef.current.clear();
+              setNiaTranscript('');
+              if (outputAudioCtxRef.current) {
+                nextStartTimeRef.current = outputAudioCtxRef.current.currentTime;
+              }
+              // Send an explicit interrupt client content message
+              if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                wsRef.current.send(JSON.stringify({ clientContent: { turns: [{ role: 'user', parts: [{ text: newlySpoken.trim() }] }] } }));
+              }
             }
           }
           
@@ -275,7 +291,7 @@ export function useLiveApi(onAction: (action: any) => void) {
           recognitionRef.current = null;
         }
         setTranscript('');
-        setRiaTranscript('');
+        setNiaTranscript('');
       }, []);
 
   useEffect(() => {
@@ -288,5 +304,5 @@ export function useLiveApi(onAction: (action: any) => void) {
     }
   }, []);
 
-  return { isConnected, isConnecting, isError, transcript, riaTranscript, connect, disconnect, sendContextUpdate };
+  return { isConnected, isConnecting, isError, transcript, niaTranscript, connect, disconnect, sendContextUpdate };
 }

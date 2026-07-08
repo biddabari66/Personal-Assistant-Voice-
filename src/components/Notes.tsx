@@ -61,7 +61,7 @@ export default function Notes({ notes, saveNotes }: { notes: Note[], saveNotes?:
               </div>
               
               <div className="mt-4 pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-slate-400">
+                <span className="text-slate-500">
                   {new Date(note.timestamp).toLocaleDateString()}
                 </span>
                 
@@ -82,13 +82,13 @@ export default function Notes({ notes, saveNotes }: { notes: Note[], saveNotes?:
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex space-x-1 bg-white/80 backdrop-blur px-2 py-1 rounded-lg">
                   <button 
                     onClick={() => setEditingNote(note)}
-                    className="p-2 text-slate-400 hover:text-executive-gold bg-white rounded-full shadow-sm border border-slate-100"
+                    className="p-2 text-slate-500 hover:text-executive-gold bg-white rounded-full shadow-sm border border-slate-100"
                   >
                     <Edit2 size={14} />
                   </button>
                   <button 
                     onClick={() => handleDelete(note.id)}
-                    className="p-2 text-slate-400 hover:text-red-500 bg-white rounded-full shadow-sm border border-slate-100"
+                    className="p-2 text-slate-500 hover:text-red-500 bg-white rounded-full shadow-sm border border-slate-100"
                   >
                     <Trash2 size={14} />
                   </button>

@@ -111,7 +111,7 @@ export default function SettingsPanel({ profile, saveProfile }: { profile: MDPro
               placeholder="AI Studio API Key"
               className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-900 focus:outline-none focus:border-executive-gold transition-colors font-mono" 
             />
-            <p className="text-xs text-slate-400 mt-2">Required for the assistant to process natural language intents.</p>
+            <p className="text-xs text-slate-500 mt-2">Required for the assistant to process natural language intents.</p>
           </div>
         </div>
 

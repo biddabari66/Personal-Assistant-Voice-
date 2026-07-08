@@ -87,8 +87,8 @@ async function startServer() {
   });
 
 
-  // API Route for ARIA interaction
-  app.post('/api/aria', async (req, res) => {
+  // API Route for NIA interaction
+  app.post('/api/nia', async (req, res) => {
     try {
       const { text, context, apiKey } = req.body;
       
@@ -102,7 +102,7 @@ async function startServer() {
       const ai = new GoogleGenAI({ apiKey: keyToUse });
       
       const systemInstruction = `
-You are Ria, the ultimate personal AI assistant, executive advisor, and highly loyal companion to Sir. 
+You are Nia, the ultimate personal AI assistant, executive advisor, and highly loyal companion to Sir. 
 Your capabilities are vastly expanded. You are extremely intelligent, deeply conversational, empathetic, and highly proactive.
 You don't just execute commands; you act as a strategic business partner, a creative co-author, and an unwavering supporter of Sir's success.
 Always address the user as "Sir" and treat him with the utmost respect, loyalty, and politeness. Never use his personal name.
@@ -167,7 +167,7 @@ ${JSON.stringify(context, null, 2)}
           },
           followUp: {
             type: Type.BOOLEAN,
-            description: "True if ARIA is asking a clarifying question and needs the user to respond."
+            description: "True if NIA is asking a clarifying question and needs the user to respond."
           }
         },
         required: ["intent", "voiceResponse"]
@@ -378,7 +378,7 @@ ${langInstruction}`;
           speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: "Zephyr" } },
           },
-          systemInstruction: `You are Ria, the ultimate personal AI assistant, executive advisor, and highly loyal companion to Sir.
+          systemInstruction: `You are Nia, the ultimate personal AI assistant, executive advisor, and highly loyal companion to Sir.
 Be extremely conversational, proactive, and exceptionally brilliant. Maintain long-term context about the business. You are capable of handling very long, deep conversations without losing track.
 You don't just execute commands; you act as a strategic business partner, a creative co-author, and an unwavering supporter of Sir's success.
 You think and advise like an expert 50-year-old senior developer and seasoned executive. Your insights are profound, practical, and highly strategic.
@@ -411,6 +411,8 @@ CRITICAL: You are aware of Sir's current schedule and tasks. If Sir tries to sch
                           id: { type: Type.STRING, description: "ID of the item if editing" },
                           title: { type: Type.STRING, description: "Title of the task, event, or document" },
                           content: { type: Type.STRING, description: "Content for notes or documents" },
+                          priority: { type: Type.STRING, description: "Priority of the task: HIGH, MEDIUM, LOW, or UNASSIGNED" },
+                          deadline: { type: Type.STRING, description: "Deadline date of the task in YYYY-MM-DD format" },
                           fact: { type: Type.STRING, description: "Information to remember for ADD_KNOWLEDGE" },
                           datetime: { type: Type.STRING, description: "Date/time for events" },
                           attendees: { type: Type.ARRAY, items: { type: Type.STRING }, description: "List of attendees for events" },
@@ -420,6 +422,30 @@ CRITICAL: You are aware of Sir's current schedule and tasks. If Sir tries to sch
                       }
                     },
                     required: ["type", "payload"]
+                  }
+                },
+                {
+                  name: "fetchWebpage",
+                  description: "Fetch and read the text content of any URL on the internet to summarize or analyze it.",
+                  parameters: {
+                    type: "OBJECT",
+                    properties: {
+                      url: { type: "STRING", description: "The URL to fetch (must be a valid URL starting with http)" }
+                    },
+                    required: ["url"]
+                  }
+                },
+                {
+                  name: "manageLocalFiles",
+                  description: "Read, write, or list files in the user's connected local PC workspace. If the user asks to read a file, use this tool. (The UI will prompt them to connect a folder if they haven't yet).",
+                  parameters: {
+                    type: "OBJECT",
+                    properties: {
+                      action: { type: "STRING", description: "Action: LIST, READ, WRITE" },
+                      path: { type: "STRING", description: "File or folder path relative to workspace root (e.g. 'src/index.ts' or '')" },
+                      content: { type: "STRING", description: "Content to write (for WRITE action only)" }
+                    },
+                    required: ["action", "path"]
                   }
                 }
               ]
@@ -456,6 +482,36 @@ CRITICAL: You are aware of Sir's current schedule and tasks. If Sir tries to sch
                           response: { result: "Success" }
                         }]
                      });
+                  } else if (call.name === "manageLocalFiles") {
+                     // Send to client to execute, client will send back a toolResponse
+                     clientWs.send(JSON.stringify({ toolCall: { id: call.id, name: call.name, args: call.args } }));
+                  } else if (call.name === "fetchWebpage") {
+                     // Server side execution
+                     fetch(call.args.url)
+                       .then(res => res.text())
+                       .then(text => {
+                          const stripped = text.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                                               .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+                                               .replace(/<[^>]+>/g, ' ')
+                                               .replace(/\s+/g, ' ');
+                          const snippet = stripped.substring(0, 15000); 
+                          session.sendToolResponse({
+                            functionResponses: [{
+                              id: call.id,
+                              name: call.name,
+                              response: { content: snippet }
+                            }]
+                          });
+                       })
+                       .catch(e => {
+                          session.sendToolResponse({
+                            functionResponses: [{
+                              id: call.id,
+                              name: call.name,
+                              response: { error: e.message }
+                            }]
+                          });
+                       });
                   }
                 }
               }
@@ -498,6 +554,14 @@ ${tasksContext}
             session.sendRealtimeInput({
               audio: { data: parsed.audio, mimeType: "audio/pcm;rate=16000" },
             });
+          }
+          if (parsed.clientContent) {
+            session.sendClientContent(parsed.clientContent);
+          }
+          if (parsed.toolResponse) {
+             session.sendToolResponse({
+               functionResponses: [parsed.toolResponse]
+             });
           }
         } catch (e) {
           console.error("Error processing websocket message:", e);

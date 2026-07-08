@@ -19,13 +19,13 @@ export default function CommandLog({ log }: { log: CommandLogEntry[] }) {
         </div>
       ) : (
         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-          <div className="max-h-[600px] overflow-y-auto p-4 space-y-4">
+          <div className="overflow-y-visible p-4 space-y-4">
             {sortedLog.map((entry) => {
               const timeStr = new Date(entry.timestamp).toLocaleString();
               return (
                 <div key={entry.id} className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex flex-col space-y-3">
-                  <div className="flex items-center text-xs text-slate-400 font-medium">
-                    <Activity size={12} className="mr-1 text-slate-400" />
+                  <div className="flex items-center text-xs text-slate-500 font-medium">
+                    <Activity size={12} className="mr-1 text-slate-500" />
                     {timeStr}
                   </div>
                   
